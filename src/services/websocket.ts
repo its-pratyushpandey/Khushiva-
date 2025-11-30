@@ -2,7 +2,7 @@ import { Client, IMessage } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import type { ChatResponse, TypingEvent } from '@/types/chat'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'https://khushiva-ai-1.onrender.com/ws/chat'
+const WS_URL = import.meta.env.VITE_WS_URL || 'https://khushiva.onrender.com/ws/chat'
 
 export class WebSocketService {
   private client: Client | null = null
