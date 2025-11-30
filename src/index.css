@@ -1,0 +1,845 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent pull-to-refresh and overscroll bounce on mobile */
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  html {
+    @apply scroll-smooth;
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
+  }
+  
+  body {
+    height: 100%;
+    overflow: hidden;
+    width: 100%;
+  }
+  
+  /* Full viewport height for all devices including mobile browsers */
+  #root {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    min-height: -webkit-fill-available;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* Ensure viewport meta is respected */
+  @supports (-webkit-touch-callout: none) {
+    #root {
+      height: -webkit-fill-available;
+    }
+  }
+}
+
+/* ============================================
+   AUTH PAGE LAYOUT - Production Ready
+   ============================================
+   Responsive, accessible, scrollable auth pages
+   with internal card scrolling (not page scroll)
+   ============================================ */
+
+:root {
+  /* === CSS Variables for Quick Theming === */
+  /* Card dimensions */
+  --auth-card-max-width: 520px;
+  --auth-card-min-width: 320px;
+  --auth-card-width: min(520px, 90%);
+  
+  /* Spacing */
+  --auth-page-padding: 20px;
+  --auth-card-padding: 2rem;
+  --auth-card-padding-mobile: 1.25rem;
+  
+  /* Border radius */
+  --auth-card-radius: 1rem;
+  --auth-input-radius: 0.75rem;
+  
+  /* Colors - Light mode */
+  --auth-bg-gradient-start: #f0f9ff;
+  --auth-bg-gradient-mid: #faf5ff;
+  --auth-bg-gradient-end: #fce7f3;
+  --auth-card-bg: rgba(255, 255, 255, 0.95);
+  --auth-card-border: rgba(229, 231, 235, 0.5);
+  
+  /* Shadows */
+  --auth-card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Focus outline for accessibility */
+  --auth-focus-ring: 2px solid rgb(14, 165, 233);
+  --auth-focus-offset: 2px;
+}
+
+/* Dark mode theming */
+.dark {
+  --auth-bg-gradient-start: #111827;
+  --auth-bg-gradient-mid: #1f2937;
+  --auth-bg-gradient-end: #111827;
+  --auth-card-bg: rgba(17, 24, 39, 0.95);
+  --auth-card-border: rgba(55, 65, 81, 0.5);
+  --auth-card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 
+                      0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* === Main Auth Page Container === */
+.auth-page-container {
+  /* Full viewport - background always visible */
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  width: 100%;
+  
+  /* Beautiful gradient background */
+  background: linear-gradient(
+    135deg,
+    var(--auth-bg-gradient-start) 0%,
+    var(--auth-bg-gradient-mid) 50%,
+    var(--auth-bg-gradient-end) 100%
+  );
+  
+  /* Flexbox for centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Padding to prevent edge-to-edge on all screens */
+  padding: var(--auth-page-padding);
+  
+  /* Prevent page scrolling - only card scrolls */
+  overflow: hidden;
+  
+  /* Position for potential overlays */
+  position: relative;
+}
+
+/* === Auth Wrapper (contains header + card) === */
+.auth-wrapper {
+  /* Constrained width with fluid scaling */
+  width: var(--auth-card-width);
+  max-width: var(--auth-card-max-width);
+  min-width: var(--auth-card-min-width);
+  
+  /* Max height leaves room for padding */
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  
+  /* Flexbox layout */
+  display: flex;
+  flex-direction: column;
+  
+  /* Prevent wrapper from scrolling */
+  overflow: hidden;
+  
+  /* For animations */
+  position: relative;
+}
+
+/* === Auth Card (the scrollable container) === */
+.auth-card {
+  /* Visual styling */
+  background: var(--auth-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--auth-card-radius);
+  border: 1px solid var(--auth-card-border);
+  box-shadow: var(--auth-card-shadow);
+  
+  /* Padding */
+  padding: var(--auth-card-padding);
+  
+  /* CRITICAL: Internal scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Allow card to grow/shrink within wrapper */
+  flex: 1;
+  min-height: 0; /* Important for flexbox scrolling */
+  
+  /* Accessibility: Focusable for keyboard users */
+  outline: none;
+}
+
+/* === Keyboard Focus Outline (Accessibility) === */
+.auth-card:focus {
+  outline: var(--auth-focus-ring);
+  outline-offset: var(--auth-focus-offset);
+}
+
+.auth-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Custom scrollbar for auth card (webkit browsers) */
+.auth-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.auth-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-card::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+
+.auth-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode scrollbar */
+.dark .auth-card::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+.dark .auth-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.7);
+}
+
+/* === Mobile Responsive (<= 480px) === */
+@media (max-width: 480px) {
+  .auth-page-container {
+    /* Reduce padding on very small screens */
+    padding: 12px;
+  }
+  
+  .auth-wrapper {
+    /* Full width on mobile */
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+  
+  .auth-card {
+    /* Reduced padding on mobile */
+    padding: var(--auth-card-padding-mobile);
+    border-radius: 0.75rem;
+  }
+  
+  /* Stack elements vertically, full-width buttons */
+  .auth-card button {
+    width: 100%;
+    min-height: 44px; /* Touch-friendly size */
+    font-size: 0.875rem; /* Readable on small screens */
+  }
+  
+  /* Ensure form inputs are touch-friendly */
+  .auth-card input,
+  .auth-card select,
+  .auth-card textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* === Tablet Responsive (481px - 768px) === */
+@media (min-width: 481px) and (max-width: 768px) {
+  .auth-page-container {
+    padding: 16px;
+  }
+  
+  .auth-card {
+    padding: 1.75rem;
+  }
+}
+
+/* === Desktop (> 768px) === */
+@media (min-width: 769px) {
+  .auth-wrapper {
+    /* Slightly more breathing room on desktop */
+    max-height: calc(100vh - 60px);
+  }
+  
+  .auth-card {
+    /* Full desktop padding */
+    padding: 2rem;
+  }
+}
+
+/* === Accessibility Enhancements === */
+
+/* High contrast focus indicators */
+@media (prefers-contrast: high) {
+  .auth-card:focus {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .auth-card {
+    scroll-behavior: auto;
+  }
+  
+  .auth-wrapper * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Focus styles for interactive elements inside auth card */
+.auth-card button:focus-visible,
+.auth-card input:focus-visible,
+.auth-card select:focus-visible,
+.auth-card textarea:focus-visible,
+.auth-card a:focus-visible {
+  outline: 2px solid rgb(14, 165, 233);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Ensure keyboard navigation is smooth */
+.auth-card:focus-within {
+  /* Optional: subtle glow when any child has focus */
+  box-shadow: var(--auth-card-shadow), 
+              0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* === Print Styles === */
+@media print {
+  .auth-page-container {
+    background: white;
+  }
+  
+  .auth-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    overflow: visible;
+  }
+}
+
+/* ============================================
+   END AUTH PAGE LAYOUT
+   ============================================ */
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-6 py-3 rounded-xl font-medium
+           hover:from-primary-700 hover:to-secondary-700 active:from-primary-800 active:to-secondary-800
+           transition-all duration-200 shadow-lg hover:shadow-xl
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl font-medium
+           border-2 border-gray-300 dark:border-gray-600
+           hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600
+           transition-all duration-200 shadow-sm hover:shadow-md
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl font-medium
+           hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .message-bubble {
+    @apply rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 md:px-5 md:py-3.5 w-full break-words shadow-lg overflow-hidden;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    max-width: 100%;
+  }
+  
+  /* Mobile-specific code block improvements */
+  .message-bubble pre {
+    @apply max-w-full;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .message-bubble code {
+    @apply font-mono text-xs sm:text-sm;
+    white-space: pre;
+    word-break: keep-all;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border-2 border-gray-300 dark:border-gray-600 
+           bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed
+           placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all text-sm sm:text-base;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 sm:p-6 transition-all;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(155, 155, 155, 0.5);
+    border-radius: 20px;
+    border: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(155, 155, 155, 0.7);
+  }
+
+  /* Dark mode scrollbar */
+  .dark .scrollbar-thin {
+    scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+  }
+
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 100, 100, 0.5);
+  }
+
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 100, 100, 0.7);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50;
+  }
+
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.1) 50%, 
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* Touch target for better mobile UX */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  /* Touch-friendly sizing for mobile */
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px];
+  }
+  
+  /* Full screen utilities */
+  .full-screen {
+    @apply fixed inset-0 w-full h-full overflow-hidden;
+  }
+  
+  .full-viewport {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Safe area padding for mobile notches */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  
+  .safe-left {
+    padding-left: max(env(safe-area-inset-left), 0px);
+  }
+  
+  .safe-right {
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
+  
+  /* Responsive container queries */
+  @container (min-width: 640px) {
+    .container-sm\:text-lg {
+      font-size: 1.125rem;
+      line-height: 1.75rem;
+    }
+  }
+  
+  /* Optimized scrolling for mobile and full-screen */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent pull-to-refresh on mobile */
+  .prevent-pull-refresh {
+    overscroll-behavior-y: none;
+  }
+
+  /* Responsive text sizing */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl;
+  }
+}
+
+/* Custom animations */
+@keyframes typing {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(50px);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+@keyframes celebration-burst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes firework-trail {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes rainbow-shift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes celebration-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4),
+                0 0 40px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8),
+                0 0 80px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.typing-dot {
+  animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.5s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Professional shadow utilities */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
+.hover\:shadow-3xl:hover {
+  box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+}
+
+.shadow-glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.shadow-glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Glass morphism enhanced */
+.glass-strong {
+  @apply bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-gray-200/60 dark:border-gray-700/60 shadow-2xl;
+}
+
+/* Responsive text utilities */
+@media (max-width: 640px) {
+  .text-responsive-xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .text-responsive-xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .text-responsive-xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+/* Smooth scrolling for all elements */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced focus states for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+}
+
+/* Custom gradient backgrounds */
+.gradient-mesh {
+  background: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(249, 115, 22, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+}
+
+.dark .gradient-mesh {
+  background: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(249, 115, 22, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+}
+

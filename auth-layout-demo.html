@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Page Layout - Demo</title>
+    <style>
+        /* ============================================
+           DEMO: Auth Page Layout
+           Standalone HTML to demonstrate the concept
+           ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* CSS Variables for Quick Theming */
+            --auth-card-max-width: 520px;
+            --auth-card-width: min(520px, 90%);
+            --auth-page-padding: 20px;
+            --auth-card-padding: 2rem;
+            --auth-card-padding-mobile: 1.25rem;
+            --auth-card-radius: 1rem;
+            --auth-bg-gradient-start: #f0f9ff;
+            --auth-bg-gradient-mid: #faf5ff;
+            --auth-bg-gradient-end: #fce7f3;
+            --auth-card-bg: rgba(255, 255, 255, 0.95);
+            --auth-card-border: rgba(229, 231, 235, 0.5);
+            --auth-card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --auth-focus-ring: 2px solid rgb(14, 165, 233);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main container - Full viewport with gradient */
+        .auth-page-container {
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            background: linear-gradient(
+                135deg,
+                var(--auth-bg-gradient-start) 0%,
+                var(--auth-bg-gradient-mid) 50%,
+                var(--auth-bg-gradient-end) 100%
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--auth-page-padding);
+            overflow: hidden; /* Prevent page scrolling */
+        }
+
+        /* Wrapper constrains width and height */
+        .auth-wrapper {
+            width: var(--auth-card-width);
+            max-width: var(--auth-card-max-width);
+            max-height: calc(100vh - 40px);
+            max-height: calc(100dvh - 40px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header (doesn't scroll) */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .auth-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(to right, #0ea5e9, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header p {
+            color: #6b7280;
+        }
+
+        /* Scrollable card */
+        .auth-card {
+            background: var(--auth-card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--auth-card-radius);
+            border: 1px solid var(--auth-card-border);
+            box-shadow: var(--auth-card-shadow);
+            padding: var(--auth-card-padding);
+            overflow-y: auto; /* Internal scrolling */
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .auth-card:focus {
+            outline: var(--auth-focus-ring);
+            outline-offset: 2px;
+        }
+
+        /* Custom scrollbar */
+        .auth-card::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .auth-card::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 4px;
+        }
+
+        .auth-card::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.5);
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: 2px solid #0ea5e9;
+            outline-offset: 2px;
+            border-color: transparent;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(to right, #0ea5e9, #a855f7);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px; /* Touch-friendly */
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+        }
+
+        button:focus-visible {
+            outline: 2px solid #0ea5e9;
+            outline-offset: 2px;
+        }
+
+        .divider {
+            margin: 1.5rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #d1d5db;
+        }
+
+        .divider span {
+            background: var(--auth-card-bg);
+            padding: 0 1rem;
+            position: relative;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            .auth-page-container {
+                padding: 12px;
+            }
+
+            .auth-wrapper {
+                width: 100%;
+                max-height: calc(100vh - 24px);
+            }
+
+            .auth-card {
+                padding: var(--auth-card-padding-mobile);
+            }
+
+            .auth-header h1 {
+                font-size: 1.5rem;
+            }
+
+            input, button {
+                font-size: 16px; /* Prevent iOS zoom */
+            }
+        }
+
+        /* Demo-specific styles */
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .info-box strong {
+            color: #0369a1;
+        }
+
+        .keyboard-hint {
+            background: #f3f4f6;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page-container">
+        <div class="auth-wrapper">
+            <!-- Header (Fixed, doesn't scroll) -->
+            <div class="auth-header">
+                <h1>🎨 Demo: Auth Layout</h1>
+                <p>Resize window to test responsiveness</p>
+            </div>
+
+            <!-- Scrollable Card -->
+            <div class="auth-card" tabindex="0" role="main" aria-label="Login form">
+                <div class="info-box">
+                    <strong>✅ Production-Ready Features:</strong><br>
+                    • Internal card scrolling (background stays visible)<br>
+                    • Responsive: 320px to 4K screens<br>
+                    • Keyboard accessible (try arrow keys!)<br>
+                    • Touch-friendly on mobile<br>
+                    • CSS variables for easy theming
+                </div>
+
+                <h2 style="margin-bottom: 1rem; color: #111827;">Sign In</h2>
+
+                <!-- OAuth Buttons -->
+                <button style="background: white; color: #374151; border: 2px solid #d1d5db; margin-bottom: 0.75rem;">
+                    🔵 Continue with Google
+                </button>
+                <button style="background: #1f2937; margin-bottom: 0.75rem;">
+                    🐙 Continue with GitHub
+                </button>
+
+                <div class="divider">
+                    <span>Or continue with email</span>
+                </div>
+
+                <!-- Form -->
+                <form onsubmit="event.preventDefault(); alert('Form submitted!');">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+
+                    <!-- Extra fields to demonstrate scrolling -->
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" placeholder="John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" placeholder="+1 (234) 567-8900">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="company">Company (Optional)</label>
+                        <input type="text" id="company" placeholder="Acme Inc.">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <input type="text" id="role" placeholder="Software Engineer">
+                    </div>
+
+                    <button type="submit">Sign In</button>
+
+                    <div class="keyboard-hint">
+                        💡 <strong>Keyboard Users:</strong> Use ↑↓ Arrow Keys, Page Up/Down to scroll this card
+                    </div>
+                </form>
+
+                <p style="text-align: center; margin-top: 1.5rem; color: #6b7280; font-size: 0.875rem;">
+                    Don't have an account? <a href="#" style="color: #0ea5e9; text-decoration: none; font-weight: 600;">Sign up</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Optional: Keyboard scroll enhancement
+        const card = document.querySelector('.auth-card');
+        
+        card.addEventListener('keydown', (e) => {
+            if (!card.contains(document.activeElement)) return;
+            
+            const scrollAmount = 40;
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    card.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    card.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+                    break;
+                case 'PageDown':
+                    e.preventDefault();
+                    card.scrollBy({ top: card.clientHeight * 0.8, behavior: 'smooth' });
+                    break;
+                case 'PageUp':
+                    e.preventDefault();
+                    card.scrollBy({ top: -card.clientHeight * 0.8, behavior: 'smooth' });
+                    break;
+                case 'Home':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        card.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    break;
+                case 'End':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        card.scrollTo({ top: card.scrollHeight, behavior: 'smooth' });
+                    }
+                    break;
+            }
+        });
+
+        // Demo: Log scroll position
+        card.addEventListener('scroll', () => {
+            const scrollPercent = Math.round((card.scrollTop / (card.scrollHeight - card.clientHeight)) * 100);
+            console.log(`Scroll: ${scrollPercent}%`);
+        });
+    </script>
+</body>
+</html>

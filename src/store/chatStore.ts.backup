@@ -1,0 +1,393 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { v4 as uuidv4 } from 'uuid'
+import type { Message, ChatResponse, ChatSession } from '@/types/chat'
+import { chatApi } from '@/services/api'
+import { webSocketService } from '@/services/websocket'
+
+interface ChatState {
+  sessionId: string
+  messages: Message[]
+  chatSessions: ChatSession[]
+  currentSessionId: string | null
+  isLoading: boolean
+  isTyping: boolean
+  isConnected: boolean
+  userIdentifier: string
+  
+  // Actions
+  initializeWebSocket: () => void
+  sendMessage: (content: string) => Promise<void>
+  sendMessageViaREST: (content: string) => Promise<void>
+  setTyping: (isTyping: boolean) => void
+  loadHistory: () => Promise<void>
+  clearMessages: () => void
+  saveCurrentSession: () => void
+  loadSession: (sessionId: string) => void
+  deleteSession: (sessionId: string) => void
+  renameSession: (sessionId: string, newTitle: string) => void
+  pinSession: (sessionId: string) => void
+  addTagToSession: (sessionId: string, tag: string) => void
+  removeTagFromSession: (sessionId: string, tag: string) => void
+  exportSession: (sessionId: string) => void
+  clearAllSessions: () => void
+}
+
+const generateSessionTitle = (messages: Message[]): string => {
+  if (messages.length === 0) return 'New Conversation'
+  
+  const firstUserMessage = messages.find(m => m.senderType === 'USER')
+  if (!firstUserMessage) return 'New Conversation'
+  
+  const title = firstUserMessage.content.slice(0, 50)
+  return title.length < firstUserMessage.content.length ? `${title}...` : title
+}
+
+const generateSessionPreview = (messages: Message[]): string => {
+  if (messages.length === 0) return 'No messages yet'
+  
+  const lastMessage = messages[messages.length - 1]
+  const preview = lastMessage.content.slice(0, 60)
+  return preview.length < lastMessage.content.length ? `${preview}...` : preview
+}
+
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set, get) => ({
+  sessionId: uuidv4(),
+  messages: [],
+  chatSessions: [],
+  currentSessionId: null,
+  isLoading: false,
+  isTyping: false,
+  isConnected: false,
+  userIdentifier: `user-${Date.now()}`,
+
+  initializeWebSocket: () => {
+    webSocketService.connect(
+      (response: ChatResponse) => {
+        const botMessage: Message = {
+          id: response.messageId,
+          content: response.response,
+          senderType: 'BOT',
+          intent: response.intent,
+          confidenceScore: response.confidence,
+          createdAt: response.timestamp,
+          quickReplies: response.quickReplies,
+          entities: response.entities,
+          isRead: false,
+        }
+        
+        set((state) => ({
+          messages: [...state.messages, botMessage],
+          isLoading: false,
+          isTyping: false,
+        }))
+        
+        // Auto-save after bot message
+        setTimeout(() => get().saveCurrentSession(), 500)
+      },
+      (event) => {
+        // Handle typing events from other users if needed
+        if (event.sessionId === get().sessionId && event.userIdentifier !== get().userIdentifier) {
+          set({ isTyping: event.isTyping })
+        }
+      },
+      (connected) => {
+        set({ isConnected: connected })
+      }
+    )
+  },
+
+  sendMessage: async (content: string) => {
+    const { sessionId, userIdentifier, isConnected } = get()
+
+    // Add user message immediately
+    const userMessage: Message = {
+      id: uuidv4(),
+      content,
+      senderType: 'USER',
+      createdAt: new Date().toISOString(),
+      isRead: true,
+    }
+
+    set((state) => ({
+      messages: [...state.messages, userMessage],
+      isLoading: true,
+    }))
+
+    // Auto-save after user message
+    setTimeout(() => get().saveCurrentSession(), 500)
+
+    try {
+      if (isConnected) {
+        // Send via WebSocket
+        webSocketService.sendMessage(sessionId, content, userIdentifier)
+      } else {
+        // Fallback to REST
+        await get().sendMessageViaREST(content)
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      set({ isLoading: false })
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: uuidv4(),
+        content: 'Sorry, there was an error sending your message. Please try again.',
+        senderType: 'SYSTEM',
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      }
+      set((state) => ({
+        messages: [...state.messages, errorMessage],
+      }))
+    }
+  },
+
+  sendMessageViaREST: async (content: string) => {
+    const { sessionId, userIdentifier } = get()
+
+    try {
+      const response = await chatApi.sendMessage({
+        sessionId,
+        message: content,
+        userIdentifier,
+      })
+
+      const botMessage: Message = {
+        id: response.messageId,
+        content: response.response,
+        senderType: 'BOT',
+        intent: response.intent,
+        confidenceScore: response.confidence,
+        createdAt: response.timestamp,
+        quickReplies: response.quickReplies,
+        entities: response.entities,
+        isRead: false,
+      }
+
+      set((state) => ({
+        messages: [...state.messages, botMessage],
+        isLoading: false,
+      }))
+      
+      // Auto-save after bot message
+      setTimeout(() => get().saveCurrentSession(), 500)
+    } catch (error) {
+      console.error('REST API error:', error)
+      set({ isLoading: false })
+      throw error
+    }
+  },
+
+  setTyping: (isTyping: boolean) => {
+    const { sessionId, userIdentifier, isConnected } = get()
+    
+    if (isConnected) {
+      webSocketService.sendTyping(sessionId, userIdentifier, isTyping)
+    }
+  },
+
+  loadHistory: async () => {
+    const { sessionId } = get()
+    
+    try {
+      const session = await chatApi.getSessionHistory(sessionId)
+      set({ messages: session.messages })
+    } catch (error) {
+      console.error('Error loading history:', error)
+    }
+  },
+
+  clearMessages: () => {
+    const { messages, chatSessions, currentSessionId } = get()
+    
+    // Save current session before clearing
+    if (messages.length > 0) {
+      const existingSessionIndex = chatSessions.findIndex(s => s.id === currentSessionId)
+      
+      if (existingSessionIndex !== -1) {
+        // Update existing session
+        const updatedSessions = [...chatSessions]
+        updatedSessions[existingSessionIndex] = {
+          ...updatedSessions[existingSessionIndex],
+          messages,
+          updatedAt: new Date().toISOString(),
+          messageCount: messages.length,
+          preview: generateSessionPreview(messages),
+        }
+        set({ chatSessions: updatedSessions })
+      } else {
+        // Create new session
+        const newSession: ChatSession = {
+          id: get().sessionId,
+          title: generateSessionTitle(messages),
+          preview: generateSessionPreview(messages),
+          messages,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messageCount: messages.length,
+          isPinned: false,
+          tags: [],
+        }
+        set({ chatSessions: [newSession, ...chatSessions] })
+      }
+    }
+    
+    // Start new session
+    const newSessionId = uuidv4()
+    set({ 
+      messages: [], 
+      sessionId: newSessionId,
+      currentSessionId: newSessionId,
+    })
+  },
+
+  saveCurrentSession: () => {
+    const { messages, chatSessions, sessionId, currentSessionId } = get()
+    
+    if (messages.length === 0) return
+    
+    const existingSessionIndex = chatSessions.findIndex(s => s.id === currentSessionId || s.id === sessionId)
+    
+    if (existingSessionIndex !== -1) {
+      // Update existing session
+      const updatedSessions = [...chatSessions]
+      updatedSessions[existingSessionIndex] = {
+        ...updatedSessions[existingSessionIndex],
+        messages,
+        updatedAt: new Date().toISOString(),
+        messageCount: messages.length,
+        preview: generateSessionPreview(messages),
+      }
+      set({ chatSessions: updatedSessions })
+    } else {
+      // Create new session
+      const newSession: ChatSession = {
+        id: sessionId,
+        title: generateSessionTitle(messages),
+        preview: generateSessionPreview(messages),
+        messages,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        messageCount: messages.length,
+        isPinned: false,
+        tags: [],
+      }
+      set({ chatSessions: [newSession, ...chatSessions], currentSessionId: sessionId })
+    }
+  },
+
+  loadSession: (sessionId: string) => {
+    const { chatSessions } = get()
+    const session = chatSessions.find(s => s.id === sessionId)
+    
+    if (session) {
+      // Save current session before loading new one
+      get().saveCurrentSession()
+      
+      set({ 
+        messages: session.messages,
+        sessionId: session.id,
+        currentSessionId: session.id,
+      })
+    }
+  },
+
+  deleteSession: (sessionId: string) => {
+    const { chatSessions } = get()
+    set({ 
+      chatSessions: chatSessions.filter(s => s.id !== sessionId) 
+    })
+  },
+
+  renameSession: (sessionId: string, newTitle: string) => {
+    const { chatSessions } = get()
+    const sessionIndex = chatSessions.findIndex(s => s.id === sessionId)
+    
+    if (sessionIndex !== -1) {
+      const updatedSessions = [...chatSessions]
+      updatedSessions[sessionIndex] = {
+        ...updatedSessions[sessionIndex],
+        title: newTitle,
+        updatedAt: new Date().toISOString(),
+      }
+      set({ chatSessions: updatedSessions })
+    }
+  },
+
+  pinSession: (sessionId: string) => {
+    const { chatSessions } = get()
+    const sessionIndex = chatSessions.findIndex(s => s.id === sessionId)
+    
+    if (sessionIndex !== -1) {
+      const updatedSessions = [...chatSessions]
+      updatedSessions[sessionIndex] = {
+        ...updatedSessions[sessionIndex],
+        isPinned: !updatedSessions[sessionIndex].isPinned,
+      }
+      set({ chatSessions: updatedSessions })
+    }
+  },
+
+  addTagToSession: (sessionId: string, tag: string) => {
+    const { chatSessions } = get()
+    const sessionIndex = chatSessions.findIndex(s => s.id === sessionId)
+    
+    if (sessionIndex !== -1) {
+      const updatedSessions = [...chatSessions]
+      const currentTags = updatedSessions[sessionIndex].tags
+      if (!currentTags.includes(tag)) {
+        updatedSessions[sessionIndex] = {
+          ...updatedSessions[sessionIndex],
+          tags: [...currentTags, tag],
+        }
+        set({ chatSessions: updatedSessions })
+      }
+    }
+  },
+
+  removeTagFromSession: (sessionId: string, tag: string) => {
+    const { chatSessions } = get()
+    const sessionIndex = chatSessions.findIndex(s => s.id === sessionId)
+    
+    if (sessionIndex !== -1) {
+      const updatedSessions = [...chatSessions]
+      updatedSessions[sessionIndex] = {
+        ...updatedSessions[sessionIndex],
+        tags: updatedSessions[sessionIndex].tags.filter(t => t !== tag),
+      }
+      set({ chatSessions: updatedSessions })
+    }
+  },
+
+  exportSession: (sessionId: string) => {
+    const { chatSessions } = get()
+    const session = chatSessions.find(s => s.id === sessionId)
+    
+    if (session) {
+      const dataStr = JSON.stringify(session, null, 2)
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+      const exportFileDefaultName = `chat-${session.title.replace(/[^a-z0-9]/gi, '-')}-${new Date().toISOString().split('T')[0]}.json`
+      
+      const linkElement = document.createElement('a')
+      linkElement.setAttribute('href', dataUri)
+      linkElement.setAttribute('download', exportFileDefaultName)
+      linkElement.click()
+    }
+  },
+
+  clearAllSessions: () => {
+    set({ chatSessions: [], messages: [], sessionId: uuidv4(), currentSessionId: null })
+  },
+}),
+    {
+      name: 'chat-storage',
+      partialize: (state) => ({ 
+        chatSessions: state.chatSessions,
+        userIdentifier: state.userIdentifier,
+      }),
+    }
+  )
+)
